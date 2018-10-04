@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-BOOST_HOME=/home/laptop/Documents/programming/boost_1_67_0
+BOOST_HOME=
 BOOST_LIB=${BOOST_HOME}/libs
 CPP_FOLDER=cpp/src
 CPP_FILE=${CPP_FOLDER}/*.cpp
