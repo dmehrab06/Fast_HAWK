@@ -1,0 +1,1 @@
+g++ log_reg_case.cpp cpp/src/*.cpp -o log_reg_case
