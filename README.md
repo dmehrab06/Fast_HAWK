@@ -17,8 +17,7 @@ make
 
 ## Test
 
-test folder contains some dummy data (See https://github.com/atifrahman/HAWK and paper for details of data) to run the code (both log_reg_case.out and log_reg_control.out)
-From base dir
+test folder contains some dummy data (See https://github.com/atifrahman/HAWK and paper for details of data). To run the code (both log_reg_case.out and log_reg_control.out) from base dir,
 
 ```
 cd test
