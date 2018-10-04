@@ -2,12 +2,12 @@
 
 This is a faster implementation of https://github.com/atifrahman/HAWK/blob/master/log_reg_case.R and https://github.com/atifrahman/HAWK/blob/master/log_reg_control.R. This work is done as course project of CSE6411 in April 2018 semester. This code are part of the implementation of method described in this paper https://elifesciences.org/articles/32920.
 
-##Prerequisites
+## Prerequisites
 
 boost library
 https://www.boost.org/
 
-##Installation
+## Installation
 
 To build the executable you need to have make tool. You have to edit the Makefile to give the location of boost library include file ($BOOST_HOME) and boost library location ($BOOST_LIB).
 
@@ -15,7 +15,7 @@ To build the executable you need to have make tool. You have to edit the Makefil
 make
 ```
 
-##Test
+## Test
 
 test folder contains some dummy data (See https://github.com/atifrahman/HAWK and paper for details of data) to run the code (both log_reg_case.out and log_reg_control.out)
 From base dir
