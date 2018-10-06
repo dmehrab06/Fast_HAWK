@@ -15,7 +15,7 @@
 #define CLASS_NAME_LENGTH 8
 #define CLASS_NAME1 "Case"
 #define CLASS_NAME2 "Control"
-#define CHUNK_SIZE 10
+#define CHUNK_SIZE 10000
 //#define DEBUG
 
 using namespace std;
