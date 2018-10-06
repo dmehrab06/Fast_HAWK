@@ -43,7 +43,7 @@ int main()
     }
 
     double learn_rate = 0.1; 
-    int mx_iter = 20;
+    int mx_iter = 25;
     //cin>>learn_rate>>mx_iter;
 
     unsigned int nrow = find_row_count();
