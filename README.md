@@ -21,15 +21,15 @@ The executable has the capability to divide the work among multiple worker. This
 The executable calling format is : 
 
 ```
-../log_reg_case.out [-p number of worker]
-../log_reg_control.out [-p number of worker]
+./log_reg_case.out [-p number of worker]
+./log_reg_control.out [-p number of worker]
 ```
 
 For example, to run the code with 2 worker
 
 ```
-../log_reg_case.out -p 2
-../log_reg_control.out -p 2
+./log_reg_case.out -p 2
+./log_reg_control.out -p 2
 ```
 
 To run with single worker calling the executable without any argument is enough. Passing -p 1 will do the same
