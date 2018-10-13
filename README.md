@@ -15,9 +15,29 @@ To build the executable you need to have make tool. You have to edit the Makefil
 make
 ```
 
+## Run
+
+The executable has the capability to divide the work among multiple worker. This can lead to potential speedup in multi core platform.
+The executable calling format is : 
+
+```
+../log_reg_case.out [-p number of worker]
+../log_reg_control.out [-p number of worker]
+```
+
+For example, to run the code with 2 worker
+
+```
+../log_reg_case.out -p 2
+../log_reg_control.out -p 2
+```
+
+To run with single worker calling the executable without any argument is enough. Passing -p 1 will do the same
+
 ## Test
 
-test folder contains some dummy data (See https://github.com/atifrahman/HAWK and paper for details of data). To run the code (both log_reg_case.out and log_reg_control.out) from base dir,
+Test folder contains some dummy data (See https://github.com/atifrahman/HAWK and paper for details of data). 
+To run the code (both log_reg_case.out and log_reg_control.out) from base dir,
 
 ```
 cd test
