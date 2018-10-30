@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <iostream>
-#include <tchar.h>
 #include <math.h>
 #include <stdlib.h>
 #include <cstring>
@@ -129,7 +128,7 @@ D_matrix inverse(D_matrix &matA, int N, bool &singular) {
     D_matrix matInverse = initNewMatrix(N, N, 0);
 
     // Find determinant of A[][] 
-    int det = determinant(matA, N); 
+    double det = determinant(matA, N); 
     if (det == 0) { 
         cout << "Singular matrix, can't find its inverse"; 
         singular = true;
@@ -137,7 +136,7 @@ D_matrix inverse(D_matrix &matA, int N, bool &singular) {
         // Check: What to do?
         return initNewMatrix(1, 1, 0); 
     } 
-  
+
     // Find adjoint 
     D_matrix matAdj = initNewMatrix(N, N, 0); 
     adjoint(matA, matAdj, N); 
