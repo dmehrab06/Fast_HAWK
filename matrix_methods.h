@@ -9,6 +9,37 @@
 using namespace std;
 #define D_matrix std::vector<vector<double> >
 
+
+D_matrix initNewMatrix(int r, int c, double val){
+
+    D_matrix newMat;
+    for(int i = 0; i < r; i++){
+        std::vector<double> emptyRow(c, val);
+        newMat.push_back(emptyRow);
+    }
+
+    return newMat;
+}
+
+D_matrix initMatWithRandom(int r, int c) {
+    
+    D_matrix newMat;
+    int factor1 = 1, factor2 = 2;
+    for (int i = 0; i < r; i++) {
+        vector<double> row;
+        for (int j = 0; j < c; j++) {
+            double data = (((i + 1) * factor1) + (j + 1) * factor2) / 4.2;
+            row.push_back(data);
+            factor1 += (rand() % 5);
+            factor2 += (rand() % 7);
+        }
+        newMat.push_back(row);
+    }
+
+    return newMat;
+}
+
+
 void getCofactor(D_matrix &matA, D_matrix &matTemp, int p, int q, int n) 
 { 
     int i = 0, j = 0; 
@@ -129,33 +160,4 @@ void printMatrix(D_matrix mm){
         cout << "\n";
     }
     return;
-}
-
-D_matrix initNewMatrix(int r, int c, double val){
-
-    D_matrix newMat;
-    for(int i = 0; i < r; i++){
-        std::vector<double> emptyRow(c, val);
-        newMat.push_back(emptyRow);
-    }
-
-    return newMat;
-}
-
-D_matrix initMatWithRandom(int r, int c) {
-    
-    D_matrix newMat;
-    int factor1 = 1, factor2 = 2;
-    for (int i = 0; i < r; i++) {
-        vector<double> row;
-        for (int j = 0; j < c; j++) {
-            double data = (((i + 1) * factor1) + (j + 1) * factor2) / 4.2;
-            row.push_back(data);
-            factor1 += (rand() % 5);
-            factor2 += (rand() % 7);
-        }
-        newMat.push_back(row);
-    }
-
-    return newMat;
 }
