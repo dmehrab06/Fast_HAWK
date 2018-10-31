@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include <boost/numeric/ublas/vector.hpp>
+/*#include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/random/mersenne_twister.hpp>
@@ -7,11 +7,12 @@
 #include <boost/numeric/ublas/lu.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix_expression.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>*/
 #include "util.hpp"
-#define BNU boost::numeric::ublas
+#include "matrix_methods.h"
+//#define BNU boost::numeric::ublas
 #define D_matrix std::vector<vector<double> >
-namespace ublas = boost::numeric::ublas;
+//namespace ublas = boost::numeric::ublas;
 
 using namespace std;
 
@@ -51,7 +52,7 @@ D_matrix multiply(D_matrix &m1, D_matrix &m2){
 	return ans;
 }
 
-template<class T>
+/*template<class T>
 boost::numeric::ublas::matrix<T> gjinverse(const boost::numeric::ublas::matrix<T> &m, bool &singular){
      using namespace boost::numeric::ublas;
      const int size = m.size1();
@@ -150,7 +151,7 @@ boost::numeric::ublas::matrix<T> gjinverse(const boost::numeric::ublas::matrix<T
      }
      singular = false;
      return Aright;
-}
+}*/
 
 double predict(std::vector<double>&model, std::vector<double>&data){
 	double s = 0.0;
@@ -229,26 +230,28 @@ std::vector<double> glm(std::vector<std::vector<double> >& x, std::vector<double
 		
 		D_matrix toinv = multiply(A_T_B,A);
 		
-        BNU::matrix<double>hessian(toinv.size(),toinv.size());
+        /*BNU::matrix<double>hessian(toinv.size(),toinv.size());
 		for(size_t i = 0; i<toinv.size(); ++i){
 			for(size_t j = 0; j<toinv.size(); ++j){
 				hessian(i,j) = toinv[i][j];
 			}
-		}
+		}*/
 
 		bool sing = false;
-		BNU::matrix<double> hessinv = gjinverse(hessian,sing);
+		//BNU::matrix<double> hessinv = gjinverse(hessian,sing);
+		
+		
+		D_matrix hinv = inverse(toinv,(int)toinv.size(),sing);
+		
 		if(sing){
 			return weight_old;
 		}
-		
-		D_matrix hinv(toinv.size(),std::vector<double>(toinv.size(),0));
-		
-		for(size_t i = 0; i<hinv.size(); ++i){
+
+		/*for(size_t i = 0; i<hinv.size(); ++i){
 			for(size_t j = 0; j<hinv.size(); ++j){
 				hinv[i][j] = hessinv(i,j);
 			}
-		}
+		}*/
 
 		D_matrix gradient = multiply(A_T,A_minus_y);
 		D_matrix grad_mul_hinv = multiply(hinv,gradient);
