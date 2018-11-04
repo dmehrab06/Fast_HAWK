@@ -8,7 +8,6 @@
 using namespace std;
 #define D_matrix std::vector<vector<double> >
 
-
 D_matrix initNewMatrix(int r, int c, double val){
 
     D_matrix newMat;
@@ -20,16 +19,34 @@ D_matrix initNewMatrix(int r, int c, double val){
     return newMat;
 }
 
+D_matrix initUnitMatrix(int r, int c){
+
+    D_matrix newMat;
+    for(int i = 0; i < r; i++){
+        std::vector<double> emptyRow;
+        for(int j = 0; j < c; j++){
+            if(i == j){
+                emptyRow.push_back(1);
+            } else {
+                emptyRow.push_back(0);
+            }
+        }
+        newMat.push_back(emptyRow);
+    }
+
+    return newMat;
+}
+
 D_matrix initMatWithRandom(int r, int c) {
     
     D_matrix newMat;
-    int factor1 = 1, factor2 = 2;
+    int factor1 = 7, factor2 = 3;
     for (int i = 0; i < r; i++) {
         vector<double> row;
         for (int j = 0; j < c; j++) {
             double data = (((i + 1) * factor1) + (j + 1) * factor2) / 4.2;
             row.push_back(data);
-            factor1 += (rand() % 5);
+            factor1 += (rand() % 13);
             factor2 += (rand() % 7);
         }
         newMat.push_back(row);
@@ -38,125 +55,117 @@ D_matrix initMatWithRandom(int r, int c) {
     return newMat;
 }
 
-
-void getCofactor(D_matrix &matA, D_matrix &matTemp, int p, int q, int n) 
-{ 
-    int i = 0, j = 0; 
-  
-    // Looping for each element of the matrix 
-    for (int row = 0; row < n; row++) { 
-        for (int col = 0; col < n; col++) { 
-            //  Copying into temporary matrix only those element 
-            //  which are not in given row and column 
-            if (row != p && col != q) { 
-                matTemp[i][j++] = matA[row][col]; 
-  
-                // Row is filled, so increase row index and 
-                // reset col index 
-                if (j == n - 1) { 
-                    j = 0; 
-                    i++; 
-                } 
-            } 
-        } 
-    } 
-}
- 
-// Recursive function for finding determinant of matrix. 
-// n is current dimension of A[][]
-double determinant(D_matrix &matA, int N) { 
-    double det = 0; // Initialize result 
-  
-    // Base case: if matrix contains single element 
-    if (N == 1) {
-        return matA[0][0]; 
+D_matrix multiply(D_matrix m1, D_matrix m2){
+    D_matrix ans;
+    for(int i = 0; i<m1.size(); ++i){
+        std::vector<double>line(m2[0].size(),0);
+        ans.push_back(line);
     }
-  
-    // to store cofactors 
-    D_matrix matTemp = initNewMatrix(N, N, 0); 
+    if(m1[0].size()!=m2.size()){
+        cout<<"cannot multiply\n";
+        return ans;
+    }
+    for(size_t i = 0; i<m1.size(); ++i){
+        for(size_t j = 0; j<m2[0].size(); ++j){
+            for(size_t k = 0; k<m1[0].size(); ++k){
+                ans[i][j] = ans[i][j] + m1[i][k]*m2[k][j];
+            }
+        }
+    }
+    return ans;
+}
 
-    // to store sign multiplier
-    int sign = 1;   
+D_matrix inverseLU(D_matrix matLower, D_matrix matUpper, int n, bool &singular){
 
-    // iterate for each element of first row 
-    for (int f = 0; f < N; f++) {
-
-        // getting Cofactor of A[0][f] 
-        getCofactor(matA, matTemp, 0, f, N); 
-        det += sign * matA[0][f] * determinant(matTemp, N - 1); 
-  
-        // terms are to be added with alternate sign 
-        sign = -sign; 
-    } 
-  
-    return det; 
-} 
-  
-// Function to get adjoint of A[N][N] in adj[N][N]. 
-void adjoint(D_matrix &matA, D_matrix &matAdj, int N) { 
+    D_matrix matInverse = initNewMatrix(n, n, 0);
     
-    if (N == 1) { 
-        matAdj[0][0] = 1; 
-        return; 
-    } 
-  
-    // matTemp is used to store cofactors of matA[][] 
-    int sign = 1;
-    D_matrix matTemp = initNewMatrix(N, N, 0); 
-  
-    for (int i = 0; i < N; i++) { 
-        for (int j = 0; j < N; j++) {
+    for(int inverse_col = 0; inverse_col < n; inverse_col++){
 
-            // Get cofactor of matA[i][j] 
-            getCofactor(matA, matTemp, i, j, N); 
-  
-            // sign of adj[j][i] positive 
-            // if sum of row and column indexes is even. 
-            sign = ((i + j) % 2 == 0) ? 1 : -1; 
-  
-            // Interchanging rows and columns to get the 
-            // transpose of the cofactor matrix 
-            matAdj[j][i] = (sign)*(determinant(matTemp, N-1)); 
-        } 
-    } 
-} 
-  
-// Function to calculate and return inverse, if not singular
-// if singular, don't know what to do
-D_matrix inverse(D_matrix &matA, int N, bool &singular) { 
+        vector<double> b;
+        for(int j = 0; j < n; j++){
+            if(inverse_col == j){
+                b.push_back(1);
+            } else {
+                b.push_back(0);
+            }
+        }
+        vector<double> y(n, 0);
 
-    D_matrix matInverse = initNewMatrix(N, N, 0);
+        // Forward substitution. Solve: Ly=b
+        y[0] = b[0];
+        for(int original_row = 1; original_row < n; original_row++){
+            double sum = 0;
+            for(int original_col = 0; original_col < n; original_col++){
+                sum += matLower[original_row][original_col] * y[original_col];
+            }
+            y[original_row] = b[original_row] - sum;
+        }
 
-    // Find determinant of A[][] 
-    double det = determinant(matA, N); 
-    if (det == 0) { 
-        cout << "Singular matrix, can't find its inverse"; 
-        singular = true;
+        vector<double> x(n, 0);
+        // Backward substitution. Solve: Ux=y
+        x[n-1] = y[n-1] / matUpper[n - 1][n - 1];
+        for(int original_row = n - 2; original_row > -1; original_row--){
+            double sum = 0;
+            for(int original_col = original_row + 1; original_col < n; original_col++){
+                sum += matUpper[original_row][original_col] * x[original_col];
+            }
+            x[original_row] = (y[original_row] - sum) / matUpper[original_row][original_row];
+        }
 
-        // Check: What to do?
-        return initNewMatrix(1, 1, 0); 
-    } 
-
-    // Find adjoint 
-    D_matrix matAdj = initNewMatrix(N, N, 0); 
-    adjoint(matA, matAdj, N); 
-  
-    // Find Inverse using formula "inverse(A) = adj(A)/det(A)" 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            matInverse[i][j] = matAdj[i][j] / double(det); 
+        for(int j = 0; j < n; j++){
+            matInverse[j][inverse_col] = x[j];
         }
     }
 
-    return matInverse; 
+    return matInverse;
+}
+
+// Doolittle algorithm
+void luDecomposition(D_matrix matOriginal, int n, D_matrix &matLower, D_matrix &matUpper) { 
+    
+    matLower = initNewMatrix(n, n, 0);
+    matUpper = initNewMatrix(n, n, 0);
+    
+    // Decomposing matrix into Upper and Lower 
+    // triangular matrix 
+    for (int i = 0; i < n; i++) { 
+        // Upper Triangular 
+        for (int k = i; k < n; k++) { 
+            // Summation of L(i, j) * U(j, k) 
+            double sum = 0; 
+            for (int j = 0; j < i; j++) {
+                sum += (matLower[i][j] * matUpper[j][k]); 
+            }
+            // Evaluating U(i, k) 
+            matUpper[i][k] = matOriginal[i][k] - sum; 
+        } 
+
+        // Lower Triangular 
+        for (int k = i; k < n; k++) { 
+            if (i == k) 
+                matLower[i][i] = 1; // Diagonal as 1 
+            else { 
+
+                // Summation of L(k, j) * U(j, i) 
+                double sum = 0; 
+                for (int j = 0; j < i; j++){
+                    sum += (matLower[k][j] * matUpper[j][i]); 
+                }
+
+                // Evaluating L(k, i) 
+                matLower[k][i] = (matOriginal[k][i] - sum) / matUpper[i][i]; 
+            } 
+        } 
+    } 
 } 
 
 void printMatrix(D_matrix mm){
     for(size_t i = 0; i < mm.size(); ++i){
         for(size_t j = 0; j < mm[0].size(); ++j){
-            cout << mm[i][j] << " ";
+            cout << setw(10) << mm[i][j] << "\t";
         }
-        cout << "\n";
+        cout << endl;
     }
+    cout << endl;
     return;
 }

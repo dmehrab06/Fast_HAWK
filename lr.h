@@ -52,7 +52,7 @@ D_matrix multiply(D_matrix &m1, D_matrix &m2){
 	return ans;
 }
 
-/*template<class T>
+template<class T>
 boost::numeric::ublas::matrix<T> gjinverse(const boost::numeric::ublas::matrix<T> &m, bool &singular){
      using namespace boost::numeric::ublas;
      const int size = m.size1();
@@ -151,7 +151,7 @@ boost::numeric::ublas::matrix<T> gjinverse(const boost::numeric::ublas::matrix<T
      }
      singular = false;
      return Aright;
-}*/
+}
 
 double predict(std::vector<double>&model, std::vector<double>&data){
 	double s = 0.0;
