@@ -75,7 +75,56 @@ D_matrix multiply(D_matrix m1, D_matrix m2){
     return ans;
 }
 
-D_matrix inverseLU(D_matrix matLower, D_matrix matUpper, int n, bool &singular){
+// D_matrix inverse(D_matrix matOriginal, int n, bool &singular){
+//     D_matrix matLower, matUpper;
+//     luDecomposition(matOriginal, n, matLower, matUpper);
+
+//     return inverseLU(matLower, matUpper, n, singular);
+// }
+
+// Doolittle algorithm
+void luDecomposition(D_matrix matOriginal, int n, D_matrix &matLower, D_matrix &matUpper) { 
+    
+    matLower = initNewMatrix(n, n, 0);
+    matUpper = initNewMatrix(n, n, 0);
+    
+    // Decomposing matrix into Upper and Lower 
+    // triangular matrix 
+    for (int i = 0; i < n; i++) { 
+        // Upper Triangular 
+        for (int k = i; k < n; k++) { 
+            // Summation of L(i, j) * U(j, k) 
+            double sum = 0; 
+            for (int j = 0; j < i; j++) {
+                sum += (matLower[i][j] * matUpper[j][k]); 
+            }
+            // Evaluating U(i, k) 
+            matUpper[i][k] = matOriginal[i][k] - sum; 
+        } 
+
+        // Lower Triangular 
+        for (int k = i; k < n; k++) { 
+            if (i == k) 
+                matLower[i][i] = 1; // Diagonal as 1 
+            else { 
+
+                // Summation of L(k, j) * U(j, i) 
+                double sum = 0; 
+                for (int j = 0; j < i; j++){
+                    sum += (matLower[k][j] * matUpper[j][i]); 
+                }
+
+                // Evaluating L(k, i) 
+                matLower[k][i] = (matOriginal[k][i] - sum) / matUpper[i][i]; 
+            } 
+        } 
+    } 
+} 
+
+D_matrix inverse(D_matrix matOriginal, int n, bool &singular){
+
+    D_matrix matLower, matUpper;
+    luDecomposition(matOriginal, n, matLower, matUpper);
 
     D_matrix matInverse = initNewMatrix(n, n, 0);
     
@@ -116,48 +165,10 @@ D_matrix inverseLU(D_matrix matLower, D_matrix matUpper, int n, bool &singular){
             matInverse[j][inverse_col] = x[j];
         }
     }
-
+    
+    singular = false;
     return matInverse;
 }
-
-// Doolittle algorithm
-void luDecomposition(D_matrix matOriginal, int n, D_matrix &matLower, D_matrix &matUpper) { 
-    
-    matLower = initNewMatrix(n, n, 0);
-    matUpper = initNewMatrix(n, n, 0);
-    
-    // Decomposing matrix into Upper and Lower 
-    // triangular matrix 
-    for (int i = 0; i < n; i++) { 
-        // Upper Triangular 
-        for (int k = i; k < n; k++) { 
-            // Summation of L(i, j) * U(j, k) 
-            double sum = 0; 
-            for (int j = 0; j < i; j++) {
-                sum += (matLower[i][j] * matUpper[j][k]); 
-            }
-            // Evaluating U(i, k) 
-            matUpper[i][k] = matOriginal[i][k] - sum; 
-        } 
-
-        // Lower Triangular 
-        for (int k = i; k < n; k++) { 
-            if (i == k) 
-                matLower[i][i] = 1; // Diagonal as 1 
-            else { 
-
-                // Summation of L(k, j) * U(j, i) 
-                double sum = 0; 
-                for (int j = 0; j < i; j++){
-                    sum += (matLower[k][j] * matUpper[j][i]); 
-                }
-
-                // Evaluating L(k, i) 
-                matLower[k][i] = (matOriginal[k][i] - sum) / matUpper[i][i]; 
-            } 
-        } 
-    } 
-} 
 
 void printMatrix(D_matrix mm){
     for(size_t i = 0; i < mm.size(); ++i){
