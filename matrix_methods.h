@@ -127,7 +127,8 @@ D_matrix inverse(D_matrix matOriginal, int n, bool &singular){
     luDecomposition(matOriginal, n, matLower, matUpper);
 
     D_matrix matInverse = initNewMatrix(n, n, 0);
-    
+    double det = 1;
+     
     for(int inverse_col = 0; inverse_col < n; inverse_col++){
 
         vector<double> b;
@@ -140,33 +141,44 @@ D_matrix inverse(D_matrix matOriginal, int n, bool &singular){
         }
         vector<double> y(n, 0);
 
+        det *= matLower[0][0];
         // Forward substitution. Solve: Ly=b
         y[0] = b[0];
-        for(int original_row = 1; original_row < n; original_row++){
+        for(int row = 1; row < n; row++){
             double sum = 0;
-            for(int original_col = 0; original_col < n; original_col++){
-                sum += matLower[original_row][original_col] * y[original_col];
+            for(int col = 0; col < n; col++){
+                sum += matLower[row][col] * y[col];
             }
-            y[original_row] = b[original_row] - sum;
+            y[row] = b[row] - sum;
+
+            det *= matLower[row][row];
         }
 
         vector<double> x(n, 0);
         // Backward substitution. Solve: Ux=y
         x[n-1] = y[n-1] / matUpper[n - 1][n - 1];
-        for(int original_row = n - 2; original_row > -1; original_row--){
+        det *= matUpper[n - 1][n - 1];
+        for(int row = n - 2; row > -1; row--){
             double sum = 0;
-            for(int original_col = original_row + 1; original_col < n; original_col++){
-                sum += matUpper[original_row][original_col] * x[original_col];
+            for(int col = row + 1; col < n; col++){
+                sum += matUpper[row][col] * x[col];
             }
-            x[original_row] = (y[original_row] - sum) / matUpper[original_row][original_row];
+            x[row] = (y[row] - sum) / matUpper[row][row];
+
+            det *= matUpper[row][row];
         }
 
         for(int j = 0; j < n; j++){
             matInverse[j][inverse_col] = x[j];
         }
     }
-    
-    singular = false;
+
+    if(det == 0){
+        singular = true;
+    } else {
+        singular = false;
+    }
+
     return matInverse;
 }
 
