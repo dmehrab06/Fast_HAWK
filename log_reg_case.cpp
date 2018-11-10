@@ -11,13 +11,13 @@
 #define eps 1e-30
 
 #define PCA_COUNT 10
-#define NULL_MODEL_FEATURE_COUNT 3
-#define ALT_MODEL_FEATURE_COUNT 4
+//#define NULL_MODEL_FEATURE_COUNT 3
+//#define ALT_MODEL_FEATURE_COUNT 4
 #define MAX_LINE_LENGTH 512
 #define CLASS_NAME_LENGTH 8
 #define CLASS_NAME1 "Case"
 #define CLASS_NAME2 "Control"
-#define CHUNK_SIZE 10000
+#define CHUNK_SIZE 100
 // #define DEBUG
 
 
@@ -35,17 +35,24 @@ ifstream con_file;
 ifstream feature_z_file;
 ifstream ind_file;
 ifstream total_file;
-
+ifstream cov_file;
 
 // These variables are global to ease the passing to multiple threads
 int start_indx;
 int num_of_thread;
+int PC;
+int cov_count;
+string covfile;
 int read_row_count;
+
+int NULL_MODEL_FEATURE_COUNT;
+int ALT_MODEL_FEATURE_COUNT;
 
 int mx_iter;
 double learn_rate;
 
 std::vector<std::vector<double> > Z;
+std::vector<std::vector<double> > C;
 std::vector<double> Y;
 std::vector<unsigned long long int> totals;
 std::vector<std::vector<unsigned long long int> > kmercounts;
@@ -76,9 +83,29 @@ void printmodel(vector<double>model){
 int main(int argc,char **argv)
 {
 	num_of_thread = 1;
+	PC = 2;
+	covfile = "";
+	cov_count = 0;
 	if(argc==3 && strcmp(argv[1],"-p")==0) {
 		num_of_thread = atoi(argv[2]);
 	}
+
+	for(int i = 0; i<argc; ++i){
+		if(strcmp(argv[i],"-t")==0){
+			num_of_thread = atoi(argv[i+1]);
+		}
+		else if(strcmp(argv[i],"-c")==0){
+			int ll = strlen(argv[i+1]);
+			for(int j = 0; j<ll; ++j){
+				covfile.push_back(argv[i+1][j]);
+			}
+		}
+		else if(strcmp(argv[i],"-p")==0){
+			PC = atoi(argv[i+1]);
+		}
+	}
+
+	cout<<num_of_thread<<" "<<PC<<" "<<covfile<<"\n";
 	
     if(open_file_connection()) {
         cout<<"Error in opening file"<<std::endl;
@@ -93,6 +120,7 @@ int main(int argc,char **argv)
 	//Y.size() and nrow are equal
     Z = std::vector<std::vector<double> >(nrow,std::vector<double>(PCA_COUNT,0));
     Y = std::vector<double>(nrow);
+    std::vector<double>RAWC;
     totals = std::vector<unsigned long long int>(nrow);
     
 	for(unsigned int l=0;l<Y.size();l++)
@@ -132,6 +160,28 @@ int main(int argc,char **argv)
     ind_file.close();
     total_file.close();
 
+    //reading covariate file...
+    //like Z, i dunno how much PC is there
+    if((int)covfile.size()>0){
+    	double cc;
+    	while(cov_file>>cc){
+    		RAWC.push_back(cc);
+    	}
+    	int sz = (int)RAWC.size();
+    	C = std::vector<std::vector<double> >(nrow,std::vector<double>(sz/nrow,0));
+    	int k = 0;
+    	for(int i = 0; i<nrow; ++i){
+    		for(int j = 0; j<(sz/nrow); ++j){
+    			C[i][j] = RAWC[k];
+    			k++;
+    		}
+    	}
+    	cov_count = sz/nrow;
+    	cov_file.close();
+    }
+
+    
+
     #ifdef DEBUG
     cout<<"nrow : "<<nrow<<std::endl;
     cout<<"Z"<<std::endl;
@@ -165,23 +215,26 @@ int main(int argc,char **argv)
 	 */
 	int chunk_size = CHUNK_SIZE;
 	
-	global_features_NULL = std::vector<std::vector<double> >(nrow,std::vector<double>(NULL_MODEL_FEATURE_COUNT+1));
-	global_features_ALT = std::vector<std::vector<double> >(nrow,std::vector<double>(ALT_MODEL_FEATURE_COUNT+1));
+	NULL_MODEL_FEATURE_COUNT = 1+PC+cov_count+1;
+	ALT_MODEL_FEATURE_COUNT = 1+NULL_MODEL_FEATURE_COUNT;
+
+	global_features_NULL = std::vector<std::vector<double> >(nrow,std::vector<double>(NULL_MODEL_FEATURE_COUNT));
+	global_features_ALT = std::vector<std::vector<double> >(nrow,std::vector<double>(ALT_MODEL_FEATURE_COUNT));
 
 	for(unsigned int l=0;l<nrow;l++)
 	{
 		global_features_NULL[l][0] = 1;
-		global_features_NULL[l][1] = Z[l][0];
-		global_features_NULL[l][2] = Z[l][1];
-		global_features_NULL[l][3] = totals[l];
-	}
-
-	for(unsigned int l=0;l<nrow;l++)
-	{
 		global_features_ALT[l][0] = 1;
-		global_features_ALT[l][1] = Z[l][0];
-		global_features_ALT[l][2] = Z[l][1];
-		global_features_ALT[l][3] = totals[l];
+		for(unsigned int z = 0; z<PC; ++z){
+			global_features_NULL[l][z+1] = Z[l][z];
+			global_features_ALT[l][z+1] = Z[l][z];
+		}
+		for(unsigned int c = 0; c<cov_count;++c){
+			global_features_NULL[l][1+PC+c] = C[l][c];
+			global_features_ALT[l][1+PC+c] = C[l][c];
+		}
+		global_features_NULL[l][1+PC+cov_count] = totals[l];
+		global_features_ALT[l][1+PC+cov_count] = totals[l];
 	}
 
 	null_model = glm(global_features_NULL,Y,0.1,20);
@@ -298,6 +351,18 @@ int open_file_connection()
     feature_z_file.open("pcs.evec");
     ind_file.open("gwas_eigenstratX.ind");
     total_file.open("total_kmer_counts.txt");
+    if((int)covfile.size()>0){
+    	char cvv[200];
+    	for(int i = 0; i<(int)covfile.size();++i){
+    		cvv[i] = covfile[i];
+    		cvv[i+1] = '\0';
+    	}
+    	cov_file.open(cvv);
+    	if(!cov_file){
+    		cout<<covfile<<" not found";
+    		return 1;
+    	}
+    }
 
     if(!con_file) {
         cout<<"case_out_w_bonf_top.kmerdiff not found";
@@ -371,7 +436,7 @@ void * worker_thread_func(void *arg)
 			//create the fourth column of matrix
 			for(unsigned int l1=0;l1<Y.size();l1++)
 			{
-				thread_local_features_ALT[l1][4] = counts[l1];
+				thread_local_features_ALT[l1][ALT_MODEL_FEATURE_COUNT-1] = counts[l1];
 			}
 			
 			std::vector<double> alt_model = glm(thread_local_features_ALT,Y,learn_rate,mx_iter);
