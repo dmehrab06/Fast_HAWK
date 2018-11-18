@@ -105,7 +105,7 @@ int main(int argc,char **argv)
 		}
 	}
 
-	cout<<num_of_thread<<" "<<PC<<" "<<covfile<<"\n";
+	//cout<<num_of_thread<<" "<<PC<<" "<<covfile<<"\n";
 	
     if(open_file_connection()) {
         cout<<"Error in opening file"<<std::endl;
