@@ -1,0 +1,12 @@
+paste pvals_case_top.txt case_out_w_bonf_top.kmerDiff  > pvals_case_top_merged.txt
+sort -g -k 1 -t $'\t' pvals_case_top_merged.txt > pvals_case_top_merged_sorted.txt 
+
+paste pvals_control_top.txt control_out_w_bonf_top.kmerDiff  > pvals_control_top_merged.txt
+sort -g -k 1 -t $'\t' pvals_control_top_merged.txt > pvals_control_top_merged_sorted.txt
+
+$hawkDir/convertToFasta    
+
+rm case_out_w_bonf.kmerDiff
+rm case_out_wo_bonf.kmerDiff
+rm control_out_w_bonf.kmerDiff
+rm control_out_wo_bonf.kmerDiff 
