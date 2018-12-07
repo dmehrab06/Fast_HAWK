@@ -1,3 +1,5 @@
+hawkDir = /media/dmehrab06/Workplace/ms_thesis/atif_sir/FAST_HAWK
+
 paste pvals_case_top.txt case_out_w_bonf_top.kmerDiff  > pvals_case_top_merged.txt
 sort -g -k 1 -t $'\t' pvals_case_top_merged.txt > pvals_case_top_merged_sorted.txt 
 
