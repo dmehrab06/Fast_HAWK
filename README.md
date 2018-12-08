@@ -21,15 +21,15 @@ The executable has the capability to divide the work among multiple worker. This
 The executable calling format is : 
 
 ```
-./log_reg_case.out [-p number of worker]
-./log_reg_control.out [-p number of worker]
+./log_reg_case.out [-t number of worker] [-c covariate file name] [-p number of principle components]
+./log_reg_control.out [-t number of worker] [-c covariate file name] [-p number of principle components]
 ```
 
-For example, to run the code with 2 worker
+For example, to run the code with 2 worker, 3 principle components, and has a covariate file, "cov_0.txt"
 
 ```
-./log_reg_case.out -p 2
-./log_reg_control.out -p 2
+./log_reg_case.out -t 2 -p 3 -c cov_0.txt
+./log_reg_control.out -t 2 -p 3 -c cov_0.txt
 ```
 
 To run with single worker calling the executable without any argument is enough. Passing -p 1 will do the same
@@ -41,9 +41,10 @@ To run the code (both log_reg_case.out and log_reg_control.out) from base dir,
 
 ```
 cd test
-../log_reg_case.out
-../log_reg_control.out
+../log_reg_case.out > pvals_case_top.txt
+../log_reg_control.out > pvals_control_top.txt
 ```
-Each executable dumps the p value in stdout. To store them you can redirect output or edit log_reg_case.cpp/log_reg_control.cpp.
+Each executable dumps the p value in the redirected files. 
+(In order to run convertToFasta.cpp, you must have the files: pvals_case_top.txt and pvals_control_top.txt)
 
 To compare the quality of output with the original R code output you can use r_cpp_output_compare.py by adding the output containing file name (both R and cpp output file). The comparison is shown by evaluating mean square error and std. dev. of all the pvalue and corresponding R output's p values.
