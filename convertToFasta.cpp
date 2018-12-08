@@ -5,7 +5,7 @@
 #include <algorithm>
 using namespace std;
 
-#include <pthread.h>
+//#include <pthread.h>
 #include <time.h>
 #include <math.h>
 #include <string.h>
@@ -15,40 +15,9 @@ using namespace std;
 #define MAX_REC_LEN 10240
 #define eps 1e-30
 
-long long int countcase(){
-	FILE *in=fopen("pvals_case_top_merged_sorted.txt","r");
 
-	char *line= new char[MAX_REC_LEN];
-	int MAX_FILE_READ=MAX_REC_LEN/sizeof(line[0]);
-	
-	long long int totkmer = 0;
-
-	while(fgets(line, MAX_FILE_READ, in)!=NULL){
-       totkmer++;
-	}
-
-    fclose(in);
-	return totkmer;
-}
-
-long long int countcontrol(){
-	FILE *in=fopen("pvals_control_top_merged_sorted.txt","r");
-
-	char *line= new char[MAX_REC_LEN];
-	int MAX_FILE_READ=MAX_REC_LEN/sizeof(line[0]);
-	
-	long long int totkmer = 0;
-
-	while(fgets(line, MAX_FILE_READ, in)!=NULL){
-       totkmer++;
-	}
-
-    fclose(in);
-	return totkmer;
-}
-
-long long int findkcase(){
-	long long int m = countcase();
+long long int findkcase(long long int totkmer){
+	long long int m = totkmer;
 
 	FILE *in=fopen("pvals_case_top_merged_sorted.txt","r");
 
@@ -71,8 +40,8 @@ long long int findkcase(){
 	return maxk;
 }
 
-long long int findkcontrol(){
-	long long int m = countcontrol();
+long long int findkcontrol(long long int totkmer){
+	long long int m = totkmer;
 
 	FILE *in=fopen("pvals_control_top_merged_sorted.txt","r");
 
@@ -100,10 +69,9 @@ int main(int argc, const char * argv[])
     
     FILE *inFile=fopen("pvals_case_top_merged_sorted.txt","r");
     FILE *outFile=fopen("case_kmers.fasta","w");
-	//FILE *totalFile=fopen("total_kmers.txt","r");
+	FILE *totalFile=fopen("total_kmers.txt","r");
 	
-	long long int kcase = findkcase();
-
+	
 	char *line= new char[MAX_REC_LEN];
 	char *line2= new char[MAX_REC_LEN];
 
@@ -111,10 +79,12 @@ int main(int argc, const char * argv[])
 
 	double pval;
 
-	//long long int totalKmers; 
+	long long int totalKmers; 
 
-	//fscanf(totalFile,"%lld",&totalKmers);
+	fscanf(totalFile,"%lld",&totalKmers);
 
+	long long int kcase = findkcase(totalKmers);
+	//cout<<kcase<<"\n";
     int MAX_FILE_READ=MAX_REC_LEN/sizeof(line[0]);
 
     long long int k = 1;
@@ -138,8 +108,9 @@ int main(int argc, const char * argv[])
  	inFile=fopen("pvals_control_top_merged_sorted.txt","r");
     outFile=fopen("control_kmers.fasta","w");
 	
-    long long int kcontrol = findkcontrol();
+    long long int kcontrol = findkcontrol(totalKmers);
     k = 1;
+    //cout<<kcontrol<<"\n";
  	while(k <= kcontrol){
  		fgets(line, MAX_FILE_READ, inFile);
 		temp=strtok(line,"\t\n ");
@@ -154,4 +125,5 @@ int main(int argc, const char * argv[])
 
 	fclose(inFile);
 	fclose(outFile);
+	fclose(totalFile);
 }
