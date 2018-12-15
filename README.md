@@ -32,7 +32,7 @@ For example, to run the code with 2 worker, 3 principle components, and has a co
 ./log_reg_control.out -t 2 -p 3 -c cov_0.txt
 ```
 
-To run with single worker calling the executable without any argument is enough. Passing -p 1 will do the same
+To run with single worker calling the executable without any argument is enough. Passing -t 1 will do the same
 
 ## Test
 
