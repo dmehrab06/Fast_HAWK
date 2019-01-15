@@ -272,3 +272,34 @@ std::vector<double> glm(std::vector<std::vector<double> >& x, std::vector<double
 	return weight_old;
 }
 
+std::vector<double> linear_regression(std::vector<std::vector<double> >& x, std::vector<double>& y) {
+
+	std::vector< double > weight(x[0].size());
+	for(int i = 0; i<(int)weight.size(); ++i){
+		weight[i] = 0.0;
+	}
+    
+    D_matrix X = x; D_matrix X_T = transpose(X);
+    D_matrix _y = from_vector_to_D(y);
+
+    D_matrix A = _multiply(X_T,X);
+   	bool sing = false;
+   	D_matrix A_inv = inverse(A,(int)A.size(),sing);
+
+   	if(sing){
+   		return weight;
+   	}
+
+   	D_matrix B = _multiply(A_inv,X_T);
+   	D_matrix W = _multiply(B,_y);
+
+    
+    for(int i = 0; i<(int)W.size(); ++i){
+    	weight[i] = W[i][0];
+    }
+
+	return weight;
+}
+
+
+

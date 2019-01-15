@@ -8,6 +8,16 @@
 using namespace std;
 #define D_matrix std::vector<vector<double> >
 
+D_matrix from_vector_to_D(std::vector<double>x){
+    D_matrix dummy;
+    for(int i = 0; i<(int)x.size(); ++i){
+        std::vector<double>line;
+        dummy.push_back(line);
+        dummy[i].push_back(x[i]);
+    }
+    return dummy;
+}
+
 D_matrix initNewMatrix(int r, int c, double val){
 
     D_matrix newMat;
