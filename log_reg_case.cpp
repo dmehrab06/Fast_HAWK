@@ -86,9 +86,6 @@ int main(int argc,char **argv)
 	PC = 2;
 	covfile = "";
 	cov_count = 0;
-	if(argc==3 && strcmp(argv[1],"-p")==0) {
-		num_of_thread = atoi(argv[2]);
-	}
 
 	for(int i = 0; i<argc; ++i){
 		if(strcmp(argv[i],"-t")==0){
@@ -105,8 +102,6 @@ int main(int argc,char **argv)
 		}
 	}
 
-	//cout<<num_of_thread<<" "<<PC<<" "<<covfile<<"\n";
-	
     if(open_file_connection()) {
         cout<<"Error in opening file"<<std::endl;
         return 0;
