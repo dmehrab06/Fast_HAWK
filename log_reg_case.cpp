@@ -36,7 +36,8 @@ sem_t all_done;
 ifstream con_file;
 ifstream feature_z_file;
 ifstream ind_file;
-ifstream total_file;
+ifstream case_total_file;
+ifstream control_total_file;
 ifstream cov_file;
 ifstream gender_info_file;
 
@@ -59,6 +60,8 @@ std::vector<std::vector<double> > Z;
 std::vector<std::vector<double> > C;
 std::vector<double> Y;
 std::vector<unsigned long long int> totals;
+std::vector<unsigned long long int> case_totals;
+std::vector<unsigned long long int> control_totals;
 std::vector<std::vector<unsigned long long int> > kmercounts;
 std::vector<double> output;
 std::vector<std::vector<double> > global_features_NULL;
@@ -156,12 +159,37 @@ int main(int argc,char **argv)
             Y[l] = 0.0;
         }
 
-        total_file>>totals[l];
+        // as case_total_kmers.txt may have less entry than case_kmer_counts.txt+control_kmer_counts.txt 
+		if(!case_total_file.eof()){
+			unsigned long long int tmp;
+			case_total_file>>tmp;
+			if(!case_total_file.eof() && !case_total_file.fail()){
+				case_totals.push_back(tmp);
+			}
+		}
+		// as control_total_kmers.txt may have less entry than case_kmer_counts.txt+control_kmer_counts.txt
+		if(!control_total_file.eof()){
+			unsigned long long int tmp;
+			control_total_file>>tmp;
+			if(!control_total_file.eof() && !control_total_file.fail()){
+				control_totals.push_back(tmp);
+			}
+		}
     }
+    // construct totals
+    for(unsigned int l=0;l<case_totals.size();l++)
+	{
+		totals[l]=case_totals[l];
+	}
+	for(unsigned int l=0;l<control_totals.size();l++)
+	{
+		totals[l+case_totals.size()]=control_totals[l];
+	}
 	//release the file connections
     feature_z_file.close();
     ind_file.close();
-    total_file.close();
+    case_total_file.close();
+    control_total_file.close();
 
     //reading covariate file...
     //like Z, i dunno how much PC is there
@@ -390,7 +418,8 @@ int open_file_connection()
     con_file.open("case_out_w_bonf_top.kmerDiff");
     feature_z_file.open("pcs.evec");
     ind_file.open("gwas_eigenstratX.ind");
-    total_file.open("total_kmer_counts.txt");
+    case_total_file.open("case_total_kmers.txt");
+    control_total_file.open("control_total_kmers.txt");
     if((int)covfile.size()>0){
     	char cvv[200];
     	for(int i = 0; i<(int)covfile.size();++i){
@@ -429,10 +458,15 @@ int open_file_connection()
         cout<<"gwas_eigenstratX.ind not found";
         return 1;
     }
-    if(!total_file) {
-        cout<<"total_kmer_counts.txt not found";
+    if(!case_total_file) {
+        cout<<"case_total_kmers.txt not found";
         return 1;
     }
+    if(!control_total_file) {
+        cout<<"control_total_kmers.txt not found";
+        return 1;
+    }
+    
     return 0;
 }
 
@@ -442,14 +476,24 @@ int find_row_count()
     int nrow = 0;
     char buf[MAX_LINE_LENGTH];
 
-    total_file.getline(buf,MAX_LINE_LENGTH-1);
-    while(!total_file.eof())
+    while(!case_total_file.eof())
     {
-        nrow++;
-        total_file.getline(buf,MAX_LINE_LENGTH-1);
+        case_total_file.getline(buf,MAX_LINE_LENGTH-1);
+        if(!case_total_file.eof()){
+			nrow++;
+		}
     }
-    total_file.clear(); // needed before seekg if not c++11
-    total_file.seekg(0,ios::beg);
+    while(!control_total_file.eof())
+    {
+        control_total_file.getline(buf,MAX_LINE_LENGTH-1);
+        if(!control_total_file.eof()){
+			nrow++;
+		}
+    }
+    case_total_file.clear(); // needed before seekg if not c++11
+    case_total_file.seekg(0,ios::beg);
+	control_total_file.clear(); // needed before seekg if not c++11
+    control_total_file.seekg(0,ios::beg);
 
 	return nrow;
 }
