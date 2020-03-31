@@ -17,7 +17,9 @@
 #define CLASS_NAME_LENGTH 8
 #define CLASS_NAME1 "Case"
 #define CLASS_NAME2 "Control"
-#define CHUNK_SIZE 100
+#define MALE "M"
+#define FEMALE "F"
+#define CHUNK_SIZE 10000
 // #define DEBUG
 
 
@@ -36,6 +38,7 @@ ifstream feature_z_file;
 ifstream ind_file;
 ifstream total_file;
 ifstream cov_file;
+ifstream gender_info_file;
 
 // These variables are global to ease the passing to multiple threads
 int start_indx;
@@ -43,6 +46,7 @@ int num_of_thread;
 int PC;
 int cov_count;
 string covfile;
+string gender_info_file_name;
 int read_row_count;
 
 int NULL_MODEL_FEATURE_COUNT;
@@ -86,6 +90,7 @@ int main(int argc,char **argv)
 	PC = 2;
 	covfile = "";
 	cov_count = 0;
+	gender_info_file_name = "";
 
 	for(int i = 0; i<argc; ++i){
 		if(strcmp(argv[i],"-t")==0){
@@ -99,6 +104,9 @@ int main(int argc,char **argv)
 		}
 		else if(strcmp(argv[i],"-p")==0){
 			PC = atoi(argv[i+1]);
+		}
+		else if(strcmp(argv[i],"-s")==0 && i<argc-1){
+			gender_info_file_name = argv[i+1];
 		}
 	}
 
@@ -175,9 +183,33 @@ int main(int argc,char **argv)
     	cov_file.close();
     }
 
-    
+    // reading gender covariate from gender info file of each read seq
+    // assumption is same no. of line corresponds to same read seq. both in feature_z file
+    // and gender info file
+	// if only one seq. gender is unknown (not MALE or FEMALE) this info will not be used
+    int unknown_gender = nrow;
+    std::vector<int> gender_info(nrow);
+    if((int)gender_info_file_name.size()>0){
+		char token[512];
+		for(int line_no=0;line_no < nrow;line_no++){
+			gender_info_file>>token;
+			gender_info_file>>token;
+			if(strcmp(token,MALE)==0){
+				gender_info[line_no] = 1;
+				unknown_gender--;
+			}
+			else if(strcmp(token,FEMALE)==0){
+				gender_info[line_no] = 0;
+				unknown_gender--;
+			}
+
+			gender_info_file>>token;
+		}
+	}
 
     #ifdef DEBUG
+    cout<<"gender infor file name "<<gender_info_file_name<<std::endl;
+    cout<<"unknown gender count " << unknown_gender << std::endl;
     cout<<"nrow : "<<nrow<<std::endl;
     cout<<"Z"<<std::endl;
     for(int l=0;l<nrow;l++)
@@ -211,6 +243,11 @@ int main(int argc,char **argv)
 	int chunk_size = CHUNK_SIZE;
 	
 	NULL_MODEL_FEATURE_COUNT = 1+PC+cov_count+1;
+	// if gender_info read and every seq. gender is known it means gender info is read. 
+	// So, one more feature
+	if(gender_info_file_name.size()>0 && unknown_gender==0){
+		NULL_MODEL_FEATURE_COUNT++;
+	}
 	ALT_MODEL_FEATURE_COUNT = 1+NULL_MODEL_FEATURE_COUNT;
 
 	global_features_NULL = std::vector<std::vector<double> >(nrow,std::vector<double>(NULL_MODEL_FEATURE_COUNT));
@@ -228,8 +265,16 @@ int main(int argc,char **argv)
 			global_features_NULL[l][1+PC+c] = C[l][c];
 			global_features_ALT[l][1+PC+c] = C[l][c];
 		}
-		global_features_NULL[l][1+PC+cov_count] = totals[l];
-		global_features_ALT[l][1+PC+cov_count] = totals[l];
+		if(unknown_gender==0){
+			global_features_NULL[l][1+PC+cov_count] = gender_info[l];
+			global_features_ALT[l][1+PC+cov_count] = gender_info[l];
+			global_features_NULL[l][1+PC+cov_count+1] = totals[l];
+			global_features_ALT[l][1+PC+cov_count+1] = totals[l];
+		}
+		else{
+			global_features_NULL[l][1+PC+cov_count] = totals[l];
+			global_features_ALT[l][1+PC+cov_count] = totals[l];
+		}
 	}
 
 	null_model = glm(global_features_NULL,Y,0.1,20);
@@ -358,6 +403,19 @@ int open_file_connection()
     		return 1;
     	}
     }
+    
+    if((int)gender_info_file_name.size()>0){
+		char gifn[200];
+		for(int i = 0; i<(int)gender_info_file_name.size();i++){
+			gifn[i] = gender_info_file_name[i];
+		}
+		gifn[gender_info_file_name.size()] = '\0';
+		gender_info_file.open(gifn);
+		if(!gender_info_file){
+			cout<<gender_info_file_name<<" not found";
+			return 1;
+		}
+	}
 
     if(!con_file) {
         cout<<"case_out_w_bonf_top.kmerdiff not found";
