@@ -68,7 +68,7 @@ int main(int argc, const char * argv[])
 {
     
     FILE *inFile=fopen("pvals_case_top_merged_sorted.txt","r");
-    FILE *outFile=fopen("case_kmers.fasta","w");
+    FILE *outFile=fopen("case_kmers_bh_correction.fasta","w");
 	FILE *totalFile=fopen("total_kmers.txt","r");
 	
 	
@@ -106,7 +106,7 @@ int main(int argc, const char * argv[])
 	//fclose(totalFile);
 	
  	inFile=fopen("pvals_control_top_merged_sorted.txt","r");
-    outFile=fopen("control_kmers.fasta","w");
+    outFile=fopen("control_kmers_bh_correction.fasta","w");
 	
     long long int kcontrol = findkcontrol(totalKmers);
     k = 1;
