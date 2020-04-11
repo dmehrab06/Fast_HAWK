@@ -20,6 +20,7 @@
 #define MALE "M"
 #define FEMALE "F"
 #define CHUNK_SIZE 10000
+#define GENDER_INFO_FILE_NAME "gwas_info.txt"
 // #define DEBUG
 
 
@@ -108,8 +109,8 @@ int main(int argc,char **argv)
 		else if(strcmp(argv[i],"-p")==0){
 			PC = atoi(argv[i+1]);
 		}
-		else if(strcmp(argv[i],"-s")==0 && i<argc - 1){
-			gender_info_file_name = argv[i+1];
+		else if(strcmp(argv[i],"-s")==0){
+			gender_info_file_name = GENDER_INFO_FILE_NAME;
 		}
 	}
 
@@ -240,6 +241,8 @@ int main(int argc,char **argv)
     
 
     #ifdef DEBUG
+    cout<<"gender infor file name "<<gender_info_file_name<<std::endl;
+    cout<<"unknown gender count " << unknown_gender << std::endl;
     cout<<"nrow : "<<nrow<<std::endl;
     cout<<"Z"<<std::endl;
     for(int l=0;l<nrow;l++)
@@ -262,6 +265,16 @@ int main(int argc,char **argv)
     for(int l=0;l<nrow;l++)
     {
         cout<<totals[l]<<' ';
+    }
+    cout<<std::endl;
+    
+    cout<<"covariate count " << cov_count <<std::endl;
+    for(int i=0;i<C.size();i++)
+    {
+		for(int j = 0; j<C[i].size(); ++j){
+    		std::cout<<C[i][j]<<' ';
+    	}
+    	std::cout<<std::endl;
     }
     cout<<std::endl;
     #endif
@@ -349,7 +362,7 @@ int main(int argc,char **argv)
 		//kmercounts er size protibar CHUNK_SIZE kore bartese
 		//kmercounts er each row te 15 ta column
 
-        #ifdef DEBUG
+        #ifdef DEBUG_THREAD
         /*
          * loop to see extraction from con_file is done correctly
          */
