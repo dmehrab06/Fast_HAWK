@@ -14,14 +14,14 @@
 //#define NULL_MODEL_FEATURE_COUNT 3
 //#define ALT_MODEL_FEATURE_COUNT 4
 #define MAX_LINE_LENGTH 512
-#define CLASS_NAME_LENGTH 8
+#define CLASS_NAME_LENGTH 256
 #define CLASS_NAME1 "Case"
 #define CLASS_NAME2 "Control"
 #define MALE "M"
 #define FEMALE "F"
 #define CHUNK_SIZE 10000
 #define GENDER_INFO_FILE_NAME "gwas_info.txt"
-// #define DEBUG
+#define DEBUG
 
 
 using namespace std;
@@ -129,7 +129,9 @@ int main(int argc,char **argv)
     Y = std::vector<double>(nrow);
     std::vector<double>RAWC;
     totals = std::vector<unsigned long long int>(nrow);
-    
+    #ifdef DEBUG
+    std::vector<int> gender_info_ref(nrow);
+    #endif
 	for(unsigned int l=0;l<Y.size();l++)
     {
         char buf[MAX_LINE_LENGTH];
@@ -145,15 +147,26 @@ int main(int argc,char **argv)
          */
         ind_file.getline(buf,MAX_LINE_LENGTH-1);
         stringstream sstream(buf);
-        for(int l1=strlen(buf)-1;l1>=0;l1--)
-        {
-			// works only if class name is 3rd non alpha numeric seperated string of line\t'
-            sstream>>class_name;
-            sstream>>class_name;
-            sstream>>class_name;
-        }
-
-        if(!strcmp(class_name,"Case")) {
+        // works only if class name is 3rd non alpha numeric seperated string of line\t'
+		sstream>>class_name;
+		#ifdef DEBUG
+		std::cout<<class_name<<'\t';
+		#endif
+		sstream>>class_name;
+		#ifdef DEBUG
+		std::cout<<class_name<<'\t';
+		if(strcmp(class_name,MALE)==0){
+			gender_info_ref[l] = 1;
+		}
+		else if(strcmp(class_name,FEMALE)==0){
+			gender_info_ref[l] = 0;
+		}
+		#endif
+		sstream>>class_name;
+		#ifdef DEBUG
+		std::cout<<class_name<<std::endl;
+		#endif
+        if(strcmp(class_name,"Case")==0) {
             Y[l] = 1.0;
         }
         else {
@@ -193,6 +206,29 @@ int main(int argc,char **argv)
     case_total_file.close();
     control_total_file.close();
 
+    // extracting sequence information
+	// needed to sequence sex confounder info from gwas_info.txt and covariate info 
+	// according to the sequence of samples in gwas_eigenstratX.ind
+	// this would be probably cleaner if we used map<sample_id, class_id> from the begining
+	std::vector<int> case_indx_info;
+	std::vector<int> control_indx_info;
+    char token[512];
+	for(int line_no=0;line_no < nrow;line_no++){
+		gender_info_file>>token;
+		gender_info_file>>token;
+		gender_info_file>>token;
+		if(strcmp(token,CLASS_NAME1)==0){
+			case_indx_info.push_back(line_no);
+		}
+		else if(strcmp(token,CLASS_NAME2)==0){
+			control_indx_info.push_back(line_no);
+		}
+	}
+	// rewinding gwas_info.txt file stream for future read
+	gender_info_file.clear(); // needed before seekg if not c++11
+    gender_info_file.seekg(0,ios::beg); 
+
+
     //reading covariate file...
     //like Z, i dunno how much PC is there
     if((int)covfile.size()>0){
@@ -201,41 +237,78 @@ int main(int argc,char **argv)
     		RAWC.push_back(cc);
     	}
     	int sz = (int)RAWC.size();
-    	C = std::vector<std::vector<double> >(nrow,std::vector<double>(sz/nrow,0));
+    	// first store them according to gwas_info.txt provided sample sequence
+    	std::vector<std::vector<double> > C_tmp(nrow,std::vector<double>(sz/nrow,0));
     	int k = 0;
     	for(int i = 0; i<nrow; ++i){
     		for(int j = 0; j<(sz/nrow); ++j){
-    			C[i][j] = RAWC[k];
+    			C_tmp[i][j] = RAWC[k];
     			k++;
     		}
     	}
     	cov_count = sz/nrow;
     	cov_file.close();
+    	
+    	// now store them in sequence according to gwas_eigenstratX.ind
+		// first all case samples (stably sort) then the control samples (stably sort) information are filled
+		// inside C 
+		// we use earlier individually stored sequence of case sample index and sequence of control sample index
+		C = std::vector<std::vector<double> >(nrow,std::vector<double>(sz/nrow,0));
+		int C_fillup_indx = 0;
+		for(int i = 0; i<case_indx_info.size(); ++i){
+			int indx = case_indx_info[i];
+			for(int j = 0; j<C_tmp[indx].size(); ++j){
+				C[C_fillup_indx][j] = C_tmp[indx][j];
+			}
+			C_fillup_indx++;
+		}
+		for(int i = 0; i<control_indx_info.size(); ++i){
+			int indx = control_indx_info[i];
+			for(int j = 0; j<C_tmp[indx].size(); ++j){
+				C[C_fillup_indx][j] = C_tmp[indx][j];
+			}
+			C_fillup_indx++;
+		}
     }
     
+    // similarly read gender covariate
     // reading gender covariate from gender info file of each read seq
     // assumption is same no. of line corresponds to same read seq. both in feature_z file
     // and gender info file
 	// if only one seq. gender is unknown (not MALE or FEMALE) this info will not be used
     int unknown_gender = nrow;
-    std::vector<int> gender_info(nrow);
+    std::vector<int> gender_info;
     if((int)gender_info_file_name.size()>0){
+		std::vector<int> gender_info_tmp(nrow);
+		gender_info = std::vector<int>(nrow);
+		
 		char token[512];
 		for(int line_no=0;line_no < nrow;line_no++){
 			gender_info_file>>token;
 			gender_info_file>>token;
-			
 			if(strcmp(token,MALE)==0){
-				gender_info[line_no] = 1;
+				gender_info_tmp[line_no] = 1;
 				unknown_gender--;
 			}
 			else if(strcmp(token,FEMALE)==0){
-				gender_info[line_no] = 0;
+				gender_info_tmp[line_no] = 0;
 				unknown_gender--;
 			}
 
 			gender_info_file>>token;
 		}
+		
+		int gender_fillup_indx = 0;
+		for(int i = 0; i<case_indx_info.size(); ++i){
+			int indx = case_indx_info[i];
+			gender_info[gender_fillup_indx] = gender_info_tmp[indx];
+			gender_fillup_indx++;
+		}
+		for(int i = 0; i<control_indx_info.size(); ++i){
+			int indx = control_indx_info[i];
+			gender_info[gender_fillup_indx] = gender_info_tmp[indx];
+			gender_fillup_indx++;
+		}		
 	}
 
     
@@ -277,6 +350,23 @@ int main(int argc,char **argv)
     	std::cout<<std::endl;
     }
     cout<<std::endl;
+    
+    if(case_indx_info.size() + control_indx_info.size() == C.size()) {
+		std::cout << "covariate sample count and case+control sample count match" << std::endl;
+	}
+    
+    if(gender_info_ref.size() == gender_info.size()) {
+		std::cout << "gender information sample count and case+control sample count match" << std::endl;
+	}
+    
+    int correct = 1;
+    for(int i=0;i<gender_info_ref.size();i++)
+    {
+		if(gender_info_ref[i]!=gender_info[i]){
+			correct = 0;
+		}
+	}
+	std::cout << "gender_info correctness " << correct << std::endl;
     #endif
 
 	/*
